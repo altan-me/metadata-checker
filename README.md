@@ -20,14 +20,15 @@ This tool is designed to help developers, SEO specialists, and content creators 
 - **Raw Tag View:** Includes a collapsible section displaying all extracted meta tags with their raw attributes.
 - **User Feedback:** Shows loading indicators and clear success or error messages.
 - **Simple Interface:** Clean and straightforward UI for ease of use.
+- **Canonical Link Check:** Detects and displays the page's `<link rel="canonical" href="...">` value (or shows a clear message when none is present), so you can verify canonicalization quickly.
+- **Character Counts:** Shows character counts for `title` and `description` values (general, Open Graph and Twitter), helping you gauge length against SEO best-practices.
 
-## Technologies Used
+## Technologies Used- **Backend:**
 
-- **Backend:**
-  - Python 3
-  - Flask (Micro web framework)
-  - Requests (HTTP library for fetching URLs)
-  - Beautiful Soup 4 (HTML parsing library)
+- Python 3
+- Flask (Micro web framework)
+- Requests (HTTP library for fetching URLs)
+- Beautiful Soup 4 (HTML parsing library)
 - **Frontend:**
   - HTML5
   - CSS3 (including CSS Variables for styling)
@@ -87,7 +88,5 @@ _(Add screenshots of the application interface here)_
 ## Future Improvements / TODO
 
 - More robust URL validation (handle edge cases, international domains/Punycode).
-- Display character counts for `title` and `description` tags.
 - Add visual warnings for missing _required_ tags (e.g., missing `og:title` if `og:type` is present).
 - Option to simulate different User-Agents.
-- Provide deployment instructions (e.g., using Docker, Gunicorn, Heroku, etc.).)
