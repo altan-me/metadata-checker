@@ -218,6 +218,12 @@ HTML_TEMPLATE = """
             padding: 5px;
             border-radius: 3px;
         }
+        .char-count {
+            font-size: 0.85em;
+            color: var(--light-text);
+            margin-top: 6px;
+        }
+        /* (Loading bar removed) */
         details { /* Style the collapsible raw section */
             border: 1px solid var(--border-color);
             border-radius: 5px;
@@ -345,6 +351,19 @@ HTML_TEMPLATE = """
                     img.alt = `${key} preview`;
                     img.onerror = () => { img.style.display = 'none'; }; // Hide if image fails to load
                     valueSpan.appendChild(img);
+                }
+                // If the key is a description or title (page, og, twitter), show character count
+                try {
+                    const keyLower = (key || '').toString().toLowerCase();
+                    if (keyLower.includes('description') || keyLower.includes('title')) {
+                        const textVal = (typeof value === 'string') ? value : String(value || '');
+                        const countDiv = document.createElement('div');
+                        countDiv.className = 'char-count';
+                        countDiv.textContent = `${textVal.length} characters`;
+                        valueSpan.appendChild(countDiv);
+                    }
+                } catch (e) {
+                    // Defensive: if value is not convertible, skip counting
                 }
             } else {
                 valueSpan.textContent = '(Not set or empty)';
@@ -539,6 +558,7 @@ HTML_TEMPLATE = """
             resultsStatus.className = 'loading';
             resultsStatus.textContent = 'Fetching and extracting metadata...';
             resultsContent.innerHTML = ''; // Clear previous results
+            // (loading bar removed)
             submitButton.disabled = true;
             spinner.style.display = 'inline-block';
             buttonText.textContent = 'Verifying...';
@@ -565,7 +585,7 @@ HTML_TEMPLATE = """
                 resultsStatus.className = 'error';
                 resultsStatus.textContent = `Error: ${error.message}`;
                 resultsContent.innerHTML = ''; // Clear content area on error
-            } finally {
+              } finally {
                  // --- Restore UI from Loading State ---
                  submitButton.disabled = false;
                  spinner.style.display = 'none';
