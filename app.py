@@ -270,6 +270,11 @@ HTML_TEMPLATE = """
 
         <div id="results-container" style="display: none;">
             <div id="results-status"></div>
+            <div id="canonical-box" style="display:none; margin-bottom:12px; padding:10px; border-radius:4px; border:1px solid var(--border-color); background-color: #fff;">
+                <strong>Canonical URL:</strong>
+                <a id="canonical-link" href="#" target="_blank" rel="noopener noreferrer" style="margin-left:8px;"></a>
+                <span id="canonical-message" style="margin-left:8px; color:var(--light-text);"></span>
+            </div>
             <div id="results-content">
                 <!-- Results will be populated here -->
             </div>
@@ -288,6 +293,9 @@ HTML_TEMPLATE = """
         const resultsStatus = document.getElementById('results-status');
         const resultsContent = document.getElementById('results-content');
         const initialMessage = document.getElementById('initial-message');
+        const canonicalBox = document.getElementById('canonical-box');
+        const canonicalLink = document.getElementById('canonical-link');
+        const canonicalMessage = document.getElementById('canonical-message');
 
         // --- Helper Functions ---
         function escapeHtml(unsafe) {
@@ -358,12 +366,26 @@ HTML_TEMPLATE = """
             initialMessage.style.display = 'none';
             resultsContainer.style.display = 'block';
 
-            const { title, metadata } = data;
+            const { title, metadata, canonical } = data;
 
             // --- Status Message ---
             const safeUrl = escapeHtml(url);
             resultsStatus.className = 'success';
             resultsStatus.innerHTML = `Successfully fetched metadata for: <a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${safeUrl}</a>`;
+
+            // Display canonical URL or a friendly message when missing
+            if (canonical) {
+                const safeCanonical = escapeHtml(canonical);
+                canonicalLink.href = safeCanonical;
+                canonicalLink.textContent = safeCanonical;
+                canonicalMessage.textContent = '';
+                canonicalBox.style.display = 'block';
+            } else {
+                canonicalLink.href = '#';
+                canonicalLink.textContent = '';
+                canonicalMessage.textContent = 'No canonical link found in the page head.';
+                canonicalBox.style.display = 'block';
+            }
 
             // --- Prepare Data Structures ---
             const generalMeta = {};
@@ -607,14 +629,30 @@ def extract_meta():
 
         # Find all <meta> tags
         meta_tags = soup.find_all('meta')
+        # Find canonical <link rel="canonical" href="..."> in the head
+        canonical_url = None
+        link_tags = soup.find_all('link', href=True)
+        for lt in link_tags:
+            rel = lt.get('rel')
+            if rel:
+                # `rel` may be a list (BeautifulSoup) or a string
+                if isinstance(rel, list):
+                    rels = [r.lower() for r in rel if isinstance(r, str)]
+                    if 'canonical' in rels:
+                        canonical_url = lt['href'].strip()
+                        break
+                else:
+                    if 'canonical' == rel.lower() or 'canonical' in rel.lower():
+                        canonical_url = lt['href'].strip()
+                        break
         extracted_data = []
         for tag in meta_tags:
             if tag.attrs:
                 extracted_data.append({'attributes': tag.attrs})
 
         app.logger.info(f"Successfully extracted title and {len(extracted_data)} meta tags from {url}")
-        # Return both title and metadata
-        return jsonify({'title': page_title, 'metadata': extracted_data})
+        # Return title, metadata and canonical (if found)
+        return jsonify({'title': page_title, 'metadata': extracted_data, 'canonical': canonical_url})
 
     except requests.exceptions.Timeout:
         app.logger.error(f"Timeout occurred while fetching {url}")
